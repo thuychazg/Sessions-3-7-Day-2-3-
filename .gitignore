@@ -1,0 +1,15 @@
+# binary
+*.exe
+*.out
+
+# logs
+*.log
+
+# vscode
+.vscode/
+
+# env
+.env
+
+# temp
+tmp/
