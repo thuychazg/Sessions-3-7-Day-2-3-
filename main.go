@@ -1,82 +1,143 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
+	"asset-service/config"
 	"asset-service/handler"
 	"asset-service/service"
 	"asset-service/storage"
+
+	"github.com/joho/godotenv"
 )
+
+func CORSMiddleware(next http.Handler) http.Handler {
+
+	return http.HandlerFunc(func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+
+		w.Header().Set(
+			"Access-Control-Allow-Origin",
+			"*",
+		)
+
+		w.Header().Set(
+			"Access-Control-Allow-Methods",
+			"GET, POST, PUT, DELETE, OPTIONS",
+		)
+
+		w.Header().Set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Authorization",
+		)
+
+		if r.Method == http.MethodOptions {
+
+			w.WriteHeader(http.StatusOK)
+			return
+
+		}
+
+		next.ServeHTTP(w, r)
+
+	})
+}
 
 func main() {
 
-	store := storage.NewMemoryStorage()
+	err := godotenv.Load()
+	if err != nil {
+		log.Println(".env not found")
+	}
 
-	svc := service.NewAssetService(store)
+	db, err := config.ConnectDB()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	h := handler.NewHandler(svc)
+	assetStorage := storage.NewPostgresStorage(db)
 
-	rl := middleware.NewRateLimiter()
+	assetService := service.NewAssetService(assetStorage)
 
+	h := handler.NewHandler(assetService)
+
+	// ===== Assets =====
 	http.HandleFunc(
 		"/assets",
-		rl.Middleware(
-			h.ListAssets,
-		),
-		func(
-			w http.ResponseWriter,
-			r *http.Request,
-		) {
-
-			if r.Method == "GET" {
-
-				h.ListAssets(w, r)
-
-			} else if r.Method == "POST" {
-
-				h.Create(w, r)
-
-			}
-
-		},
-	)
-
-	http.HandleFunc(
-		"/assets/batch",
 		func(w http.ResponseWriter, r *http.Request) {
 
-			if r.Method == "POST" {
+			switch r.Method {
 
-				h.BatchCreate(w, r)
+			case http.MethodGet:
+				h.ListAssets(w, r)
 
-			} else {
+			case http.MethodPost:
+				h.Create(w, r)
 
-				h.BatchDelete(w, r)
+			default:
+				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			}
+
 		},
 	)
 
+	// ===== Stats =====
 	http.HandleFunc(
-		"/assets/stats",
+		"GET /stats",
 		h.Stats,
 	)
 
+	// ===== Count =====
 	http.HandleFunc(
-		"/assets/count",
+		"GET /count",
 		h.Count,
 	)
 
+	// ===== Batch delete =====
 	http.HandleFunc(
-		"/health",
-		h.Health,
-	)
-	http.HandleFunc(
-		"/assets/search",
-		h.Search,
-	)
-	http.ListenAndServe(
-		":8080",
-		nil,
+		"DELETE /assets",
+		h.BatchDelete,
 	)
 
+	// ===== Health =====
+	http.HandleFunc(
+		"GET /health",
+		h.Health,
+	)
+
+	// ===== Search =====
+	http.HandleFunc(
+		"GET /search",
+		h.Search,
+	)
+
+	// ===== Scan APIs =====
+	http.HandleFunc(
+		"POST /scan",
+		handler.StartScan,
+	)
+
+	http.HandleFunc(
+		"GET /scan-jobs/{id}",
+		handler.GetScanJob,
+	)
+
+	http.HandleFunc(
+		"GET /scan-jobs/{id}/results",
+		handler.GetScanResults,
+	)
+
+	log.Println("server :8080")
+
+	err = http.ListenAndServe(
+		":8080",
+		CORSMiddleware(http.DefaultServeMux),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

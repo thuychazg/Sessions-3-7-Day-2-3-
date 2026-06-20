@@ -18,3 +18,13 @@ type CreateAssetRequest struct {
 type BatchCreateRequest struct {
 	Assets []CreateAssetRequest `json:"assets"`
 }
+
+type ScanJob struct {
+	ID        string      `json:"id"`
+	AssetID   string      `json:"asset_id"`
+	ScanType  string      `json:"scan_type"`
+	Status    string      `json:"status"`
+	Error     string      `json:"error"`
+	Results   interface{} `json:"results"`
+	CreatedAt time.Time   `json:"created_at"`
+}

@@ -1,0 +1,1361 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>config: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">asset-service/config/db.go (0.0%)</option>
+				
+				<option value="file1">asset-service/handler/asset_handler.go (13.6%)</option>
+				
+				<option value="file2">asset-service/handler/scan_handler.go (0.0%)</option>
+				
+				<option value="file3">asset-service/main.go (0.0%)</option>
+				
+				<option value="file4">asset-service/scanner/ip_scanner.go (100.0%)</option>
+				
+				<option value="file5">asset-service/scanner/port_scanner.go (88.9%)</option>
+				
+				<option value="file6">asset-service/scanner/ssl_scanner.go (0.0%)</option>
+				
+				<option value="file7">asset-service/scanner/tech_scanner.go (0.0%)</option>
+				
+				<option value="file8">asset-service/service/asset_service.go (11.6%)</option>
+				
+				<option value="file9">asset-service/storage/memory.go (0.0%)</option>
+				
+				<option value="file10">asset-service/storage/postgres.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package config
+
+import (
+        "database/sql"
+        "fmt"
+        "os"
+
+        _ "github.com/lib/pq"
+)
+
+func ConnectDB() (*sql.DB, error) <span class="cov0" title="0">{
+
+        dsn := fmt.Sprintf(
+                "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+                os.Getenv("DB_HOST"),
+                os.Getenv("DB_PORT"),
+                os.Getenv("DB_USER"),
+                os.Getenv("DB_PASSWORD"),
+                os.Getenv("DB_NAME"),
+        )
+
+        db, err := sql.Open("postgres", dsn)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">err = db.Ping()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return db, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package handler
+
+import (
+        "asset-service/model"
+        "asset-service/service"
+        "encoding/json"
+        "math"
+        "net/http"
+        "strconv"
+        "strings"
+        "time"
+)
+
+type Handler struct {
+        service *service.AssetService
+
+        start time.Time
+}
+
+func NewHandler(
+        s *service.AssetService,
+) *Handler <span class="cov8" title="1">{
+
+        return &amp;Handler{
+                service: s,
+                start:   time.Now(),
+        }
+
+}</span>
+
+func (h *Handler) Create(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov8" title="1">{
+
+        var req model.CreateAssetRequest
+
+        json.NewDecoder(
+                r.Body,
+        ).Decode(&amp;req)
+
+        a, err := h.service.Create(req)
+
+        if err != nil </span><span class="cov0" title="0">{
+
+                http.Error(w, err.Error(), 400)
+                return
+        }</span>
+
+        <span class="cov8" title="1">json.NewEncoder(w).Encode(a)</span>
+
+}
+
+func (h *Handler) BatchCreate(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        var req model.BatchCreateRequest
+
+        json.NewDecoder(
+                r.Body,
+        ).Decode(&amp;req)
+
+        result, err := h.service.BatchCreate(req)
+
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, err.Error(), 400)
+                return
+        }</span>
+
+        <span class="cov0" title="0">json.NewEncoder(w).Encode(result)</span>
+
+}
+
+func (h *Handler) Stats(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        json.NewEncoder(w).
+                Encode(
+                        h.service.Stats(),
+                )
+
+}</span>
+
+func (h *Handler) Count(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        q := r.URL.Query()
+
+        count := h.service.Count(
+                q.Get("type"),
+                q.Get("status"),
+        )
+
+        json.NewEncoder(w).Encode(
+                map[string]interface{}{
+                        "count": count,
+                },
+        )
+}</span>
+
+func (h *Handler) BatchDelete(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        ids := strings.Split(
+                r.URL.Query().Get("ids"),
+                ",",
+        )
+
+        d, n := h.service.BatchDelete(ids)
+
+        json.NewEncoder(w).Encode(
+                map[string]int{
+                        "deleted":   d,
+                        "not_found": n,
+                },
+        )
+}</span>
+
+func (h *Handler) Health(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        json.NewEncoder(w).Encode(
+                map[string]interface{}{
+
+                        "status": "ok",
+
+                        "uptime_seconds": int(time.Since(h.start).Seconds()),
+                },
+        )
+}</span>
+
+func (h *Handler) ListAssets(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        query := r.URL.Query()
+
+        page, _ := strconv.Atoi(
+                query.Get("page"),
+        )
+
+        limit, _ := strconv.Atoi(
+                query.Get("limit"),
+        )
+
+        // default
+
+        if page &lt;= 0 </span><span class="cov0" title="0">{
+
+                page = 1
+
+        }</span>
+
+        <span class="cov0" title="0">if limit &lt;= 0 </span><span class="cov0" title="0">{
+
+                limit = 20
+
+        }</span>
+
+        // max 100
+
+        <span class="cov0" title="0">if limit &gt; 100 </span><span class="cov0" title="0">{
+
+                limit = 100
+
+        }</span>
+
+        <span class="cov0" title="0">t := query.Get("type")
+
+        status := query.Get("status")
+
+        data, total, _ :=
+                h.service.ListAssets(
+                        page,
+                        limit,
+                        t,
+                        status,
+                )
+
+        totalPages :=
+                int(
+                        math.Ceil(
+                                float64(total) /
+                                        float64(limit),
+                        ),
+                )
+
+        json.NewEncoder(w).Encode(
+                map[string]interface{}{
+
+                        "data": data,
+
+                        "pagination": map[string]interface{}{
+
+                                "page": page,
+
+                                "limit": limit,
+
+                                "total": total,
+
+                                "total_pages": totalPages,
+                        },
+                },
+        )</span>
+
+}
+
+func (h *Handler) Search(
+        w http.ResponseWriter,
+        r *http.Request,
+) <span class="cov0" title="0">{
+
+        w.Header().Set(
+                "Content-Type",
+                "application/json",
+        )
+
+        q := r.URL.Query().Get(
+                "q",
+        )
+
+        if q == "" </span><span class="cov0" title="0">{
+
+                http.Error(
+                        w,
+                        "query required",
+                        http.StatusBadRequest,
+                )
+
+                return
+
+        }</span>
+
+        <span class="cov0" title="0">result := h.service.Search(q)
+
+        json.NewEncoder(w).Encode(
+                result,
+        )</span>
+
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handler
+
+import (
+        "encoding/json"
+        "log"
+        "net/http"
+        "time"
+
+        "asset-service/model"
+        "asset-service/scanner"
+
+        "github.com/google/uuid"
+)
+
+var ScanJobs = make(map[string]*model.ScanJob)
+
+type ScanRequest struct {
+        ScanType string `json:"scan_type"`
+}
+
+func StartScan(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+
+        var req ScanRequest
+
+        if err := json.NewDecoder(r.Body).Decode(&amp;req); err != nil </span><span class="cov0" title="0">{
+                http.Error(w, err.Error(), 400)
+                return
+        }</span>
+
+        <span class="cov0" title="0">target := "127.0.0.1"
+
+        var sc scanner.Scanner
+
+        switch req.ScanType </span>{
+
+        case "ip":<span class="cov0" title="0">
+                sc = &amp;scanner.IPScanner{}</span>
+
+        case "port":<span class="cov0" title="0">
+                sc = &amp;scanner.PortScanner{}</span>
+
+        case "ssl":<span class="cov0" title="0">
+                sc = &amp;scanner.SSLScanner{}</span>
+
+        case "tech":<span class="cov0" title="0">
+                sc = &amp;scanner.TechScanner{}</span>
+
+        default:<span class="cov0" title="0">
+                http.Error(w, "unsupported scan type", 400)
+                return</span>
+        }
+
+        <span class="cov0" title="0">job := &amp;model.ScanJob{
+                ID:        uuid.New().String(),
+                ScanType:  req.ScanType,
+                Status:    "pending",
+                CreatedAt: time.Now(),
+        }
+
+        ScanJobs[job.ID] = job
+
+        go func() </span><span class="cov0" title="0">{
+
+                job.Status = "running"
+
+                log.Printf(
+                        "scan=%s target=%s",
+                        req.ScanType,
+                        target,
+                )
+
+                result, err := sc.Scan(target)
+
+                if err != nil </span><span class="cov0" title="0">{
+
+                        job.Status = "failed"
+                        job.Error = err.Error()
+
+                        return
+                }</span>
+
+                <span class="cov0" title="0">job.Results = result
+                job.Status = "completed"</span>
+
+        }()
+
+        <span class="cov0" title="0">w.WriteHeader(http.StatusAccepted)
+
+        json.NewEncoder(w).Encode(job)</span>
+}
+
+func GetScanJob(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+
+        id := r.PathValue("id")
+
+        job, ok := ScanJobs[id]
+
+        if !ok </span><span class="cov0" title="0">{
+                http.Error(w, "not found", 404)
+                return
+        }</span>
+
+        <span class="cov0" title="0">json.NewEncoder(w).Encode(job)</span>
+}
+
+func GetScanResults(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+
+        id := r.PathValue("id")
+
+        job, ok := ScanJobs[id]
+
+        if !ok </span><span class="cov0" title="0">{
+
+                http.Error(w, "not found", 404)
+                return
+        }</span>
+
+        <span class="cov0" title="0">json.NewEncoder(w).Encode(
+                map[string]interface{}{
+                        "job_id":    job.ID,
+                        "scan_type": job.ScanType,
+                        "results":   job.Results,
+                },
+        )</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package main
+
+import (
+        "log"
+        "net/http"
+
+        "asset-service/config"
+        "asset-service/handler"
+        "asset-service/service"
+        "asset-service/storage"
+
+        "github.com/joho/godotenv"
+)
+
+func CORSMiddleware(next http.Handler) http.Handler <span class="cov0" title="0">{
+
+        return http.HandlerFunc(func(
+                w http.ResponseWriter,
+                r *http.Request,
+        ) </span><span class="cov0" title="0">{
+
+                w.Header().Set(
+                        "Access-Control-Allow-Origin",
+                        "*",
+                )
+
+                w.Header().Set(
+                        "Access-Control-Allow-Methods",
+                        "GET, POST, PUT, DELETE, OPTIONS",
+                )
+
+                w.Header().Set(
+                        "Access-Control-Allow-Headers",
+                        "Content-Type, Authorization",
+                )
+
+                if r.Method == http.MethodOptions </span><span class="cov0" title="0">{
+
+                        w.WriteHeader(http.StatusOK)
+                        return
+
+                }</span>
+
+                <span class="cov0" title="0">next.ServeHTTP(w, r)</span>
+
+        })
+}
+
+func main() <span class="cov0" title="0">{
+
+        err := godotenv.Load()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Println(".env not found")
+        }</span>
+
+        <span class="cov0" title="0">db, err := config.ConnectDB()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal(err)
+        }</span>
+
+        <span class="cov0" title="0">assetStorage := storage.NewPostgresStorage(db)
+
+        assetService := service.NewAssetService(assetStorage)
+
+        h := handler.NewHandler(assetService)
+
+        // ===== Assets =====
+        http.HandleFunc(
+                "/assets",
+                func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+
+                        switch r.Method </span>{
+
+                        case http.MethodGet:<span class="cov0" title="0">
+                                h.ListAssets(w, r)</span>
+
+                        case http.MethodPost:<span class="cov0" title="0">
+                                h.Create(w, r)</span>
+
+                        default:<span class="cov0" title="0">
+                                http.Error(w, "method not allowed", http.StatusMethodNotAllowed)</span>
+                        }
+
+                },
+        )
+
+        // ===== Stats =====
+        <span class="cov0" title="0">http.HandleFunc(
+                "GET /stats",
+                h.Stats,
+        )
+
+        // ===== Count =====
+        http.HandleFunc(
+                "GET /count",
+                h.Count,
+        )
+
+        // ===== Batch delete =====
+        http.HandleFunc(
+                "DELETE /assets",
+                h.BatchDelete,
+        )
+
+        // ===== Health =====
+        http.HandleFunc(
+                "GET /health",
+                h.Health,
+        )
+
+        // ===== Search =====
+        http.HandleFunc(
+                "GET /search",
+                h.Search,
+        )
+
+        // ===== Scan APIs =====
+        http.HandleFunc(
+                "POST /scan",
+                handler.StartScan,
+        )
+
+        http.HandleFunc(
+                "GET /scan-jobs/{id}",
+                handler.GetScanJob,
+        )
+
+        http.HandleFunc(
+                "GET /scan-jobs/{id}/results",
+                handler.GetScanResults,
+        )
+
+        log.Println("server :8080")
+
+        err = http.ListenAndServe(
+                ":8080",
+                CORSMiddleware(http.DefaultServeMux),
+        )
+
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal(err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package scanner
+
+import (
+        "net"
+        "time"
+)
+
+type IPScanner struct{}
+
+func (s *IPScanner) Scan(target string) (interface{}, error) <span class="cov8" title="1">{
+
+        names, _ := net.LookupAddr(target)
+
+        return map[string]interface{}{
+                "ip_address": target,
+                "geolocation": map[string]interface{}{
+                        "country": "Unknown",
+                        "city":    "Unknown",
+                },
+                "asn": map[string]interface{}{
+                        "number": 0,
+                        "name":   "Unknown",
+                },
+                "reverse_dns": names,
+                "created_at":  time.Now(),
+        }, nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package scanner
+
+import (
+        "fmt"
+        "net"
+        "time"
+)
+
+type PortScanner struct{}
+
+func isPrivateIP(ip string) bool <span class="cov8" title="1">{
+
+        addr := net.ParseIP(ip)
+
+        if addr == nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">if addr.IsLoopback() </span><span class="cov8" title="1">{
+                return true
+        }</span>
+
+        <span class="cov8" title="1">if addr.IsPrivate() </span><span class="cov0" title="0">{
+                return true
+        }</span>
+
+        <span class="cov8" title="1">return false</span>
+}
+
+func (s *PortScanner) Scan(target string) (interface{}, error) <span class="cov8" title="1">{
+
+        if !isPrivateIP(target) </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("refuse to scan public ip")
+        }</span>
+
+        <span class="cov8" title="1">ports := []int{22, 80, 443, 8080}
+
+        var openPorts []map[string]interface{}
+
+        for _, port := range ports </span><span class="cov8" title="1">{
+
+                conn, err := net.DialTimeout(
+                        "tcp",
+                        fmt.Sprintf("%s:%d", target, port),
+                        3*time.Second,
+                )
+
+                if err == nil </span><span class="cov8" title="1">{
+
+                        openPorts = append(openPorts,
+                                map[string]interface{}{
+                                        "port":     port,
+                                        "protocol": "tcp",
+                                        "state":    "open",
+                                })
+
+                        conn.Close()
+                }</span>
+        }
+
+        <span class="cov8" title="1">return map[string]interface{}{
+                "ip_address": target,
+                "open_ports": openPorts,
+                "created_at": time.Now(),
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package scanner
+
+import (
+        "crypto/tls"
+        "fmt"
+        "net"
+        "time"
+)
+
+type SSLScanner struct{}
+
+func (s *SSLScanner) Scan(target string) (interface{}, error) <span class="cov0" title="0">{
+
+        conn, err := tls.DialWithDialer(
+                &amp;net.Dialer{
+                        Timeout: 5 * time.Second,
+                },
+                "tcp",
+                fmt.Sprintf("%s:443", target),
+                &amp;tls.Config{
+                        InsecureSkipVerify: true,
+                },
+        )
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">defer conn.Close()
+
+        cert := conn.ConnectionState().PeerCertificates[0]
+
+        return map[string]interface{}{
+                "certificate": map[string]interface{}{
+                        "subject":      cert.Subject.String(),
+                        "issuer":       cert.Issuer.String(),
+                        "valid_from":   cert.NotBefore,
+                        "valid_until":  cert.NotAfter,
+                        "is_expired":   time.Now().After(cert.NotAfter),
+                        "is_self_sign": cert.Subject.String() == cert.Issuer.String(),
+                        "san":          cert.DNSNames,
+                },
+                "created_at": time.Now(),
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package scanner
+
+import (
+        "net/http"
+        "time"
+)
+
+type TechScanner struct{}
+
+func (s *TechScanner) Scan(target string) (interface{}, error) <span class="cov0" title="0">{
+
+        client := http.Client{
+                Timeout: 5 * time.Second,
+        }
+
+        resp, err := client.Get("http://" + target)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">defer resp.Body.Close()
+
+        headers := map[string]string{
+                "server":       resp.Header.Get("Server"),
+                "x-powered-by": resp.Header.Get("X-Powered-By"),
+                "content-type": resp.Header.Get("Content-Type"),
+        }
+
+        return map[string]interface{}{
+                "domain":  target,
+                "headers": headers,
+                "technologies": []map[string]interface{}{
+                        {
+                                "name":       resp.Header.Get("Server"),
+                                "confidence": 100,
+                        },
+                },
+                "created_at": time.Now(),
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package service
+
+import (
+        "errors"
+        "github.com/google/uuid"
+        "strings"
+        "time"
+
+        "asset-service/model"
+        "asset-service/storage"
+)
+
+type AssetService struct {
+        store storage.Storage
+}
+
+func NewAssetService(
+        s storage.Storage,
+) *AssetService <span class="cov8" title="1">{
+
+        return &amp;AssetService{
+                store: s,
+        }
+}</span>
+
+func validateType(t string) bool <span class="cov8" title="1">{
+
+        return t == "domain" ||
+                t == "ip" ||
+                t == "service"
+
+}</span>
+
+// CREATE
+
+func (s *AssetService) Create(
+        req model.CreateAssetRequest,
+) (model.Asset, error) <span class="cov8" title="1">{
+
+        if req.Name == "" </span><span class="cov0" title="0">{
+                return model.Asset{}, errors.New("name required")
+        }</span>
+
+        <span class="cov8" title="1">if !validateType(req.Type) </span><span class="cov8" title="1">{
+                return model.Asset{}, errors.New("invalid type")
+        }</span>
+
+        <span class="cov8" title="1">a := model.Asset{
+
+                ID:        uuid.New().String(),
+                Name:      req.Name,
+                Type:      req.Type,
+                Status:    "active",
+                CreatedAt: time.Now(),
+        }
+
+        s.store.Create(a)
+
+        return a, nil</span>
+
+}
+
+// BATCH CREATE
+
+func (s *AssetService) BatchCreate(
+        req model.BatchCreateRequest,
+) ([]model.Asset, error) <span class="cov0" title="0">{
+
+        if len(req.Assets) &gt; 100 </span><span class="cov0" title="0">{
+
+                return nil, errors.New("max 100 assets")
+        }</span>
+
+        <span class="cov0" title="0">temp := make([]model.Asset, 0)
+
+        // validate all
+
+        for _, x := range req.Assets </span><span class="cov0" title="0">{
+
+                if x.Name == "" ||
+                        !validateType(x.Type) </span><span class="cov0" title="0">{
+
+                        return nil,
+                                errors.New("validation failed")
+                }</span>
+
+                <span class="cov0" title="0">temp = append(temp, model.Asset{
+
+                        ID:        uuid.New().String(),
+                        Name:      x.Name,
+                        Type:      x.Type,
+                        Status:    "active",
+                        CreatedAt: time.Now(),
+                })</span>
+        }
+
+        // insert all
+
+        <span class="cov0" title="0">s.store.BatchCreate(temp)
+
+        return temp, nil</span>
+}
+
+// Bài 1 Stats
+
+func (s *AssetService) Stats() map[string]interface{} <span class="cov0" title="0">{
+
+        assets := s.store.GetAll()
+
+        result := map[string]interface{}{}
+
+        byType := map[string]int{}
+        byStatus := map[string]int{}
+
+        for _, a := range assets </span><span class="cov0" title="0">{
+
+                byType[a.Type]++
+
+                byStatus[a.Status]++
+
+        }</span>
+
+        <span class="cov0" title="0">result["total"] = len(assets)
+        result["by_type"] = byType
+        result["by_status"] = byStatus
+
+        return result</span>
+
+}
+
+func (s *AssetService) Count(
+        t string,
+        status string,
+) int <span class="cov0" title="0">{
+
+        count := 0
+
+        for _, a := range s.store.GetAll() </span><span class="cov0" title="0">{
+
+                if t != "" &amp;&amp;
+                        a.Type != t </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">if status != "" &amp;&amp;
+                        a.Status != status </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">count++</span>
+
+        }
+
+        <span class="cov0" title="0">return count</span>
+
+}
+
+// Bài 3 Delete
+
+func (s *AssetService) BatchDelete(
+        ids []string,
+) (int, int) <span class="cov0" title="0">{
+
+        deleted := 0
+        notFound := 0
+
+        for _, id := range ids </span><span class="cov0" title="0">{
+
+                if s.store.Delete(id) </span><span class="cov0" title="0">{
+
+                        deleted++
+
+                }</span> else<span class="cov0" title="0"> {
+
+                        notFound++
+
+                }</span>
+
+        }
+
+        <span class="cov0" title="0">return deleted, notFound</span>
+}
+
+// Search
+
+func (s *AssetService) Search(
+        q string,
+) []model.Asset <span class="cov0" title="0">{
+
+        result := []model.Asset{}
+
+        q = strings.ToLower(q)
+
+        for _, a := range s.store.GetAll() </span><span class="cov0" title="0">{
+
+                if strings.Contains(
+                        strings.ToLower(a.Name),
+                        q,
+                ) </span><span class="cov0" title="0">{
+
+                        result = append(result, a)
+                }</span>
+
+                <span class="cov0" title="0">if len(result) &gt;= 100 </span><span class="cov0" title="0">{
+                        break</span>
+                }
+
+        }
+
+        <span class="cov0" title="0">return result</span>
+
+}
+
+func (s *AssetService) TotalAssets() int <span class="cov0" title="0">{
+
+        return len(
+                s.store.GetAll(),
+        )
+
+}</span>
+
+func (s *AssetService) ListAssets(
+        page int,
+        limit int,
+        assetType string,
+        status string,
+) ([]model.Asset, int, int) <span class="cov0" title="0">{
+
+        assets := s.store.GetAll()
+
+        // FILTER
+
+        filtered := make(
+                []model.Asset,
+                0,
+        )
+
+        for _, asset := range assets </span><span class="cov0" title="0">{
+
+                if assetType != "" &amp;&amp;
+                        asset.Type != assetType </span><span class="cov0" title="0">{
+
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">if status != "" &amp;&amp;
+                        asset.Status != status </span><span class="cov0" title="0">{
+
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">filtered = append(
+                        filtered,
+                        asset,
+                )</span>
+
+        }
+
+        <span class="cov0" title="0">total := len(filtered)
+
+        // PAGINATION
+
+        start := (page - 1) * limit
+
+        end := start + limit
+
+        if start &gt; total </span><span class="cov0" title="0">{
+
+                return []model.Asset{}, total, 0
+
+        }</span>
+
+        <span class="cov0" title="0">if end &gt; total </span><span class="cov0" title="0">{
+
+                end = total
+
+        }</span>
+
+        <span class="cov0" title="0">return filtered[start:end],
+                total,
+                end - start</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package storage
+
+import (
+        "sync"
+
+        "asset-service/model"
+)
+
+type MemoryStorage struct {
+        data map[string]model.Asset
+
+        mu sync.RWMutex
+}
+
+func NewMemoryStorage() *MemoryStorage <span class="cov0" title="0">{
+
+        return &amp;MemoryStorage{
+                data: make(map[string]model.Asset),
+        }
+}</span>
+
+func (m *MemoryStorage) Create(asset model.Asset) error <span class="cov0" title="0">{
+
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.data[asset.ID] = asset
+
+        return nil
+}</span>
+
+func (m *MemoryStorage) BatchCreate(
+        assets []model.Asset,
+) error <span class="cov0" title="0">{
+
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        for _, a := range assets </span><span class="cov0" title="0">{
+
+                m.data[a.ID] = a
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (m *MemoryStorage) Delete(id string) bool <span class="cov0" title="0">{
+
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        _, ok := m.data[id]
+
+        if ok </span><span class="cov0" title="0">{
+                delete(m.data, id)
+        }</span>
+
+        <span class="cov0" title="0">return ok</span>
+}
+
+func (m *MemoryStorage) GetAll() []model.Asset <span class="cov0" title="0">{
+
+        m.mu.RLock()
+        defer m.mu.RUnlock()
+
+        result := make([]model.Asset, 0)
+
+        for _, a := range m.data </span><span class="cov0" title="0">{
+
+                result = append(result, a)
+        }</span>
+
+        <span class="cov0" title="0">return result</span>
+}
+
+func (m *MemoryStorage) Count() int <span class="cov0" title="0">{
+
+        m.mu.RLock()
+        defer m.mu.RUnlock()
+
+        return len(m.data)
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package storage
+
+import (
+        "database/sql"
+
+        "asset-service/model"
+)
+
+type PostgresStorage struct {
+        db *sql.DB
+}
+
+func NewPostgresStorage(db *sql.DB) *PostgresStorage <span class="cov0" title="0">{
+        return &amp;PostgresStorage{
+                db: db,
+        }
+}</span>
+
+// Create
+func (s *PostgresStorage) Create(asset model.Asset) error <span class="cov0" title="0">{
+
+        query := `
+        INSERT INTO assets(id,name,type,status,created_at)
+        VALUES($1,$2,$3,$4,$5)
+        `
+
+        _, err := s.db.Exec(
+                query,
+                asset.ID,
+                asset.Name,
+                asset.Type,
+                asset.Status,
+                asset.CreatedAt,
+        )
+
+        return err
+}</span>
+
+// BatchCreate
+func (s *PostgresStorage) BatchCreate(
+        assets []model.Asset,
+) error <span class="cov0" title="0">{
+
+        for _, a := range assets </span><span class="cov0" title="0">{
+
+                err := s.Create(a)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Delete
+func (s *PostgresStorage) Delete(
+        id string,
+) bool <span class="cov0" title="0">{
+
+        result, err := s.db.Exec(
+                "DELETE FROM assets WHERE id=$1",
+                id,
+        )
+
+        if err != nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov0" title="0">rows, _ := result.RowsAffected()
+
+        return rows &gt; 0</span>
+}
+
+// GetAll
+func (s *PostgresStorage) GetAll() []model.Asset <span class="cov0" title="0">{
+
+        rows, err := s.db.Query(`
+        SELECT id,name,type,status,created_at
+        FROM assets
+        `)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return []model.Asset{}
+        }</span>
+
+        <span class="cov0" title="0">defer rows.Close()
+
+        var assets []model.Asset
+
+        for rows.Next() </span><span class="cov0" title="0">{
+
+                var asset model.Asset
+
+                err := rows.Scan(
+                        &amp;asset.ID,
+                        &amp;asset.Name,
+                        &amp;asset.Type,
+                        &amp;asset.Status,
+                        &amp;asset.CreatedAt,
+                )
+
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">assets = append(assets, asset)</span>
+        }
+
+        <span class="cov0" title="0">return assets</span>
+}
+
+// Count
+func (s *PostgresStorage) Count() int <span class="cov0" title="0">{
+
+        var count int
+
+        s.db.QueryRow(
+                "SELECT COUNT(*) FROM assets",
+        ).Scan(&amp;count)
+
+        return count
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

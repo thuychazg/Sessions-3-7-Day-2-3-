@@ -11,11 +11,11 @@ import (
 )
 
 type AssetService struct {
-	store *storage.MemoryStorage
+	store storage.Storage
 }
 
 func NewAssetService(
-	s *storage.MemoryStorage,
+	s storage.Storage,
 ) *AssetService {
 
 	return &AssetService{
