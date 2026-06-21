@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - homework-final
 
 
   pull_request:
