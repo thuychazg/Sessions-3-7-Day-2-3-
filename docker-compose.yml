@@ -1,15 +1,89 @@
 services:
+
   db:
     image: postgres:15-alpine
+
     container_name: postgres_db
+
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: mini_asm
+
     ports:
       - "5432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+
+
+  backend:
+
+    container_name: asset-backend
+
+
+    build:
+      context: .
+
+
+    ports:
+      - "8080:8080"
+
+
+    environment:
+
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: mini_asm
+
+
+    depends_on:
+      - db
+
+
+    healthcheck:
+
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "http://localhost:8080/health"
+        ]
+
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+
+
+  frontend:
+
+    container_name: asset-frontend
+
+
+    build:
+      context: ./frontend
+
+
+    ports:
+      - "3000:5173"
+
+
+    environment:
+
+      VITE_API_URL: http://localhost:8080
+
+
+    depends_on:
+      - backend
+
+
+
 volumes:
+
   postgres_data:
