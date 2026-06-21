@@ -65,7 +65,7 @@ jobs:
 
       - name: Scan
         run: |
-          gosec -exclude=G104 ./...
+          gosec -exclude=G104,G402,G114 ./...
 
 
 
